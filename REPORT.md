@@ -78,7 +78,7 @@ The state transitions are:
 [ANOMALOUS] -> severity >= 3x last severity and delta >= 1.0 for 3 windows -> escalation alert
 ```
 
-The severity score was inspired by the scalar health indicator described by Singh et al. and the broader anomaly detection discussion by Kamat and Sugandhi. It uses the 95th percentile of velocity and acceleration z-scores normalized by their respective thresholds. The result is a dimensionless value that is comparable across physical groups and traceable over time, which allows the system to identify worsening inside the same abnormal event without depending on a new absolute threshold.
+The severity score was inspired by the scalar health indicator described by Singh et al. (2019) and the broader anomaly detection discussion by Kamat and Sugandhi (2020). It uses the 95th percentile of velocity and acceleration z-scores normalized by their respective thresholds. The result is a dimensionless value that is comparable across physical groups and traceable over time, which allows the system to identify worsening inside the same abnormal event without depending on a new absolute threshold.
 
 The alert parameters are loaded from `hyperparameters/alert_engine_hyperparams.yaml`, following the same configuration pattern used by the model and pipeline hyperparameters.
 
