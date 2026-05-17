@@ -1,0 +1,6 @@
+# Alert engine hyperparameters
+normal_windows_to_unlock: 12
+anomaly_windows_to_realert: 3
+severity_increase_factor: 3.0
+min_severity_increase: 1.0
+severity_windows_to_alert: 3

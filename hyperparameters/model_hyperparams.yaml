@@ -1,0 +1,6 @@
+# Anomaly model hyperparameters
+velocity_z_threshold: 4.5
+acceleration_z_threshold: 4
+velocity_window_anomaly_ratio: 0.2
+acceleration_window_anomaly_ratio: 0.2
+min_scale: 1.0e-6
