@@ -98,7 +98,7 @@ Three implementation decisions are worth noting. The `AlertEngine` hyperparamete
 
 ### Scenario-Level Analysis
 
-The table below summarizes representative scenarios reviewed during the final diagnostic analysis, including notes about the remaining errors.
+The table below summarizes the main diagnostic scenarios reviewed during the final analysis, including notes about the remaining errors. Full per-scenario metrics are available in the generated experiment outputs.
 
 | Scenario | TP | FP | FN | Note |
 |---|---:|---:|---:|---|
@@ -118,6 +118,25 @@ The gains over the baseline came from adding acceleration and dominant-axis feat
 
 The remaining false negatives are concentrated in two patterns: short incidents that do not accumulate enough anomalous windows to exceed the persistence threshold, and incidents in multi-event scenarios where the 12-window recovery requirement does not separate nearby events cleanly.
 
+## Complexity Analysis and Runtime Benchmark
+
+The final solution was also reviewed from a Big O perspective. The model fit stage is expected to scale approximately linearly with the number of baseline samples, since it computes feature means and standard deviations. Window-level prediction is also linear in the number of points inside each window. Because the configured window length is fixed at 4 hours, the practical cost of one prediction remains bounded by the window size. The alert engine is constant time per window because it only updates a small set of state counters.
+
+A separate benchmark script, `benchmark_runtime.py`, was added to empirically validate this complexity analysis without changing the main experiment pipeline. The script loads the same scenarios, uses the current model and alert engine, and measures execution time for increasing fractions of the input data. The goal was to confirm whether the implemented approach remains computationally simple and to identify which stage dominates runtime in practice.
+
+The benchmark output is saved in `experiment_outputs/runtime_benchmark_summary.csv`. The latest run produced the following summary:
+
+| Input fraction | Prediction rows | Windows | Total time (s) |
+|---:|---:|---:|---:|
+| 0.25 | 22,182 | 1,665 | 0.8689 |
+| 0.50 | 44,378 | 3,338 | 2.0904 |
+| 0.75 | 66,566 | 4,956 | 3.6828 |
+| 1.00 | 88,769 | 6,574 | 5.8145 |
+
+The model fit stage and the alert engine were lightweight. At full input size, fitting took approximately 0.38 seconds and alert processing took approximately 0.01 seconds. Most of the runtime came from window construction and window-level prediction. This is consistent with the project design: the model uses simple feature extraction, z-scores, and threshold rules, while the immutable pipeline constructs overlapping sliding windows before calling `AnomalyModel.predict()`.
+
+The benchmark also shows that the number of windows grows proportionally with the number of rows. Most runtime comes from window construction inside the immutable pipeline. Since that stage could not be modified, this is documented as an engineering finding: a pointer-based or indexed time-series approach would avoid repeated scans over overlapping windows and would be the natural next step in a production context. This optimization is carried forward in the Future Work section.
+
 ## Future Work
 
 With more data, the next step would be leave-one-scenario-out cross-validation to estimate parameter stability and reduce the risk of overfitting to this specific dataset.
@@ -127,6 +146,8 @@ The severity model would also benefit from more labeled examples. The current im
 The residual false positives in scenarios 3, 5, 6, and 9 deserve visual review. Some may represent genuinely anomalous behavior outside the labeled windows, while others may indicate early detection. These diagnoses have different implications for parameter tuning and should be separated case by case.
 
 The dataset includes the `uptime` column. Uptime-based filters were tested, inspired by Singh et al. (2019), but they did not improve the aggregate metrics in this dataset. A softer approach, such as separate baselines by operating regime or an uptime-aware confidence factor, may be more appropriate than discarding windows directly.
+
+The complexity analysis also suggests one clear engineering improvement for production: optimize sliding-window construction. The current implementation is acceptable for the provided dataset, but a pointer-based or indexed time-series approach would avoid repeated scans over overlapping windows, reducing the cost of that immutable pipeline stage without changing model behavior.
 
 Finally, with more historical data per asset, representation-based methods such as LSTM-AE or RBF-kernel SVM, discussed by Vos et al. (2022) and Radicioni et al. (2025), could capture temporal patterns that fixed z-score thresholds cannot reach. The current approach has the advantage of being fully explainable and not requiring labeled data for training, which is relevant in industrial contexts with few historical incidents.
 

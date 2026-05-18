@@ -1,0 +1,5 @@
+fraction,scenarios,fit_rows_total,predict_rows_total,n_windows_total,fit_seconds_total,windowing_seconds_total,predict_seconds_total,alert_engine_seconds_total,total_seconds_total
+0.25,29,13712,22182,1665,0.096994,0.191979,0.577256,0.00264,0.868869
+0.5,29,27444,44378,3338,0.189522,0.736006,1.159249,0.00565,2.090428
+0.75,29,41167,66566,4956,0.283541,1.673643,1.718284,0.007303,3.682772
+1.0,29,54905,88769,6574,0.378949,3.131679,2.294121,0.009751,5.8145
